@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NetWatch mini</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0b1124; color: #e8edf7; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    user-select: none; overflow: hidden; }
+  .w { display: flex; align-items: center; gap: 12px; height: 100%; padding: 0 12px 0 14px; box-sizing: border-box;
+    border: 1px solid rgba(148,163,184,.22); border-radius: 14px; background: linear-gradient(135deg, rgba(56,189,248,.10), rgba(129,140,248,.08)), #0b1124; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: #94a3b8; flex: none; box-shadow: 0 0 0 4px rgba(148,163,184,.15); }
+  .good { background: #22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,.2); } .warn { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245,158,11,.2); }
+  .bad { background: #f43f5e; box-shadow: 0 0 0 4px rgba(244,63,94,.25); animation: b 1.2s infinite; }
+  @keyframes b { 50% { opacity: .4; } }
+  .col { display: flex; flex-direction: column; min-width: 0; }
+  .v { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.1; }
+  .v small { font-size: 11px; color: #7d8aa6; font-weight: 600; margin-left: 2px; }
+  .l { font-size: 10.5px; color: #7d8aa6; text-transform: uppercase; letter-spacing: .08em; }
+  canvas { flex: 1; min-width: 60px; height: 44px; }
+  .x { position: absolute; top: 5px; right: 8px; color: #7d8aa6; cursor: pointer; font-size: 13px; opacity: 0; transition: opacity .2s; }
+  body:hover .x { opacity: 1; }
+</style>
+</head>
+<body class="pywebview-drag-region">
+<div class="w pywebview-drag-region">
+  <span class="dot" id="dot"></span>
+  <div class="col"><span class="l">Ping</span><span class="v" id="ping">—</span></div>
+  <div class="col"><span class="l">Down</span><span class="v" id="down">—</span></div>
+  <div class="col"><span class="l">Up</span><span class="v" id="up">—</span></div>
+  <canvas id="spark" width="120" height="44"></canvas>
+</div>
+<span class="x" id="close" title="Close">✕</span>
+<script>
+  const hist = [];
+  function rate(bps) { let b = (bps || 0) * 8, u = ["", "K", "M", "G"], i = 0; while (b >= 999.5 && i < 3) { b /= 1000; i++; } return [b >= 100 || i === 0 ? b.toFixed(0) : b.toFixed(1), u[i] + "b/s"]; }
+  function draw() {
+    const c = document.getElementById("spark"), x = c.getContext("2d"); x.clearRect(0, 0, c.width, c.height);
+    const v = hist.filter(n => n != null); if (v.length < 2) return; const max = Math.max(...v) * 1.2 || 1;
+    x.beginPath(); hist.forEach((n, i) => { const px = i / (hist.length - 1) * c.width, py = c.height - (n == null ? 0 : n / max) * (c.height - 4) - 2; i ? x.lineTo(px, py) : x.moveTo(px, py); });
+    x.strokeStyle = "#38bdf8"; x.lineWidth = 2; x.stroke();
+  }
+  async function tick() {
+    try {
+      const s = await window.pywebview.api.get_state();
+      document.getElementById("dot").className = "dot " + (s.status.level || "");
+      document.getElementById("ping").innerHTML = s.latency == null ? "—" : `${Math.round(s.latency)}<small>ms</small>`;
+      const d = rate(s.down), u = rate(s.up);
+      document.getElementById("down").innerHTML = `${d[0]}<small>${d[1]}</small>`;
+      document.getElementById("up").innerHTML = `${u[0]}<small>${u[1]}</small>`;
+      hist.push(s.latency); if (hist.length > 40) hist.shift(); draw();
+    } catch (e) {}
+    setTimeout(tick, 2000);
+  }
+  window.addEventListener("pywebviewready", tick);
+  document.getElementById("close").onclick = () => window.pywebview.api.toggle_overlay();
+</script>
+</body>
+</html>

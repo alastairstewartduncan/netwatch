@@ -1,0 +1,66 @@
+# Builds NetWatch on GitHub's Windows machines and publishes a release whenever you push a version tag:
+#
+#   1. bump VERSION (and add a CHANGELOG entry) in nw/version.py
+#   2. git commit -am "NetWatch 3.1.1" && git tag v3.1.1 && git push --follow-tags
+#
+# The release gets NetWatch-Setup-<version>.exe and a portable zip. Point Settings -> Data & updates at this
+# repository and every NetWatch install will offer the update automatically.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check the tag matches nw/version.py
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $v = python -c "from nw.version import VERSION; print(VERSION)"
+          if ("v$v" -ne "${{ github.ref_name }}") { throw "Tag ${{ github.ref_name }} doesn't match VERSION $v in nw/version.py" }
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller
+          choco install nsis -y --no-progress
+
+      - name: Build app, installer and portable zip
+        env:
+          NETWATCH_SIGN_CERT: ${{ secrets.NETWATCH_SIGN_CERT_PATH }}
+          NETWATCH_SIGN_PASSWORD: ${{ secrets.NETWATCH_SIGN_PASSWORD }}
+        run: python tools/build.py
+
+      - name: Release notes from the changelog
+        shell: pwsh
+        run: |
+          python -c "from nw.version import CHANGELOG as C; r=C[0]; print('## ' + r['title']); print(); [print('- ' + c) for c in r['changes']]" > notes.md
+
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: NetWatch ${{ github.ref_name }}
+          body_path: notes.md
+          files: |
+            dist/NetWatch-Setup-*.exe
+            dist/NetWatch-*-portable.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NetWatch
+          path: |
+            dist/NetWatch-Setup-*.exe
+            dist/NetWatch-*-portable.zip

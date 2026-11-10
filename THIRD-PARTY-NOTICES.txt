@@ -1,0 +1,20 @@
+NetWatch includes the following third-party software, each under its own licence:
+
+  Python                           Python Software Foundation License https://www.python.org/
+  pywebview                        BSD-3-Clause                   https://pywebview.flowrl.com/
+  psutil                           BSD-3-Clause                   https://github.com/giampaolo/psutil
+  pystray                          LGPL-3.0                       https://github.com/moses-palmer/pystray
+  Pillow                           MIT-CMU (HPND)                 https://python-pillow.org/
+  openpyxl                         MIT                            https://openpyxl.readthedocs.io/
+  Chart.js                         MIT                            https://www.chartjs.org/
+  world-atlas / Natural Earth      ISC / Public domain            https://github.com/topojson/world-atlas
+  Microsoft Edge WebView2          Microsoft Software License     https://developer.microsoft.com/microsoft-edge/webview2/
+
+NetWatch can use these online services (some only when you turn them on):
+
+  Cloudflare                       Speed tests and public IP      https://speed.cloudflare.com/
+  IEEE Registration Authority      Device manufacturer database   https://standards.ieee.org/
+  Shodan InternetDB                Internet exposure check        https://internetdb.shodan.io/
+  ip-api.com                       World map locations (opt-in)   https://ip-api.com/
+  Anthropic Claude                 Ask NetWatch assistant (opt-in) https://www.anthropic.com/
+  ntfy                             Phone push alerts (opt-in)     https://ntfy.sh/
