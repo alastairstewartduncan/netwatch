@@ -526,12 +526,19 @@ class ApiV3Mixin:
     @safe
     def router_poll_now(self):
         snap = self._x.router.poll(manual=True)
+        if snap and not self._engine.settings.get("router_enabled"):
+            self._engine.save_settings({"router_enabled": True})  # it works, so keep reading it automatically
         return {"ok": True, "snap": bool(snap)}
 
     @safe
     def router_retry(self):
         self._x.router.retry()
         return self.router_poll_now()
+
+    @safe
+    def router_enable(self, on=True):
+        self._engine.save_settings({"router_enabled": bool(on)})
+        return {"ok": True}
 
     @safe
     def router_pause(self, minutes):

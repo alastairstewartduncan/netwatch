@@ -426,7 +426,8 @@ class RouterLink:
         cfg = self._cfg()
         st = dict(self.state)
         st["next"] = (st["last_try"] + cfg["interval"]) if cfg["enabled"] else None
-        out = {"state": st, "configured": bool(cfg["enabled"] and cfg["password"]), "host": cfg["host"],
+        out = {"state": st, "configured": bool(cfg["password"]) or bool(self.snap), "enabled": cfg["enabled"],
+               "host": cfg["host"],
                "interval": cfg["interval"], "snap": self.snap}
         if self.snap:
             known = {d.get("mac", "").upper(): d for d in self.e.device_list() if d.get("mac")}

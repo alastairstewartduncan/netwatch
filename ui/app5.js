@@ -141,7 +141,8 @@ PAGES.router = {
       this.load = timeLine($("#rtLoad"), { datasets: [{ label: "CPU", color: COL.pink, data: [], fmt: v => v.toFixed(0) + "%" }, { label: "Memory", color: COL.indigo, data: [], fill: false, fmt: v => v.toFixed(0) + "%" }], yFmt: v => v + "%", yMax: 100, dateFmt: fmtDateTime });
       this.drawAi();
     }
-    $("#rtErr").innerHTML = errBox;
+    $("#rtErr").innerHTML = errBox + (v.enabled ? "" : `<div class="callout" style="margin-bottom:16px">${icon("info")}<div><b>Automatic checks are off.</b> NetWatch only reads the router when you press Read now. <button class="btn sm" id="rtOn" style="margin-left:8px">${icon("play")}Turn on</button></div></div>`);
+    if ($("#rtOn")) $("#rtOn").onclick = async () => { await API.router_enable(true); toast("NetWatch will read your router every few minutes", "good"); this.refresh(); };
     if ($("#rtRetry")) $("#rtRetry").onclick = () => API.router_retry().then(r => { toast(r.error || "Connected", r.error ? "bad" : "good"); this.refresh(); });
     this.drawKpis(s); this.drawClients();
     $("#rtFind").innerHTML = (v.findings || []).map(f => `<div class="callout warn mt">${icon("alert")}<div>${esc(f)}</div></div>`).join("");

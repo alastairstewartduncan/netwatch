@@ -455,7 +455,7 @@ PAGES.settings = {
     const on = (id, fn) => { if ($("#" + id)) $("#" + id).onclick = fn; };
     on("ovl", async () => { const r = await API.toggle_overlay(); if (r.error) toast(r.error, "bad"); });
     on("openData", () => API.open_data_folder());
-    on("routerTest", async () => { await this.save(true); toast("Signing in to your router…"); const r = await API.router_retry(); toast(r.error ? r.error : "Connected — see the Router page", r.error ? "bad" : "good"); this.s = await API.get_settings(); this.render(); });
+    on("routerTest", async () => { const en = $('input[data-k="router_enabled"]'); if (en) en.checked = true; await this.save(true); toast("Signing in to your router…"); const r = await API.router_retry(); toast(r.error ? r.error : "Connected — see the Router page", r.error ? "bad" : "good"); this.s = await API.get_settings(); this.render(); });
     on("weeklyNow", async () => { await this.save(true); const r = await API.send_weekly_now(); const k = Object.keys(r.results || {}); toast(k.length ? "Weekly summary sent" : "Enable a remote channel first", k.length ? "good" : "bad"); });
     on("testRemote", async () => { this.collectInto(); toast("Sending test alert…"); const res = (await API.test_remote(this.payload())).results || {}; const k = Object.keys(res); toast(k.length ? k.map(x => `${x}: ${res[x]}`).join(" · ") : "Enable at least one channel first", k.some(x => res[x] !== "sent") || !k.length ? "bad" : "good"); });
     on("updCheck", async () => { await this.save(true); const st = await API.check_update(); toast(st.error || (st.available ? `Version ${st.latest} available` : "You're up to date"), st.error ? "bad" : "good"); this.s = await API.get_settings(); this.render(); });
