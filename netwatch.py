@@ -32,6 +32,7 @@ LAN_ALLOWED = {
     "get_traceroute", "get_history", "get_events", "get_security", "get_troubleshoot", "run_troubleshoot",
     "run_tool", "get_tool", "get_usage", "get_timeline", "get_overnight", "get_apps_security", "get_world",
     "get_survey", "get_mesh", "get_dnsfilter", "get_sites", "pause_alerts", "ask", "run_security", "get_about",
+    "get_router", "ask_router",
 }
 
 

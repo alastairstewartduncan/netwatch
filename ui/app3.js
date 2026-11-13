@@ -427,6 +427,12 @@ PAGES.settings = {
         `<div class="section-title">Phone push (ntfy app)</div>` + row("Enabled", "Subscribe to the same topic in the free ntfy app", sw("remote.ntfy_enabled", r.ntfy_enabled)) + row("Topic / server", "Pick something hard to guess", `${txt("remote.ntfy_topic", r.ntfy_topic, "netwatch-xxxx", "text", "150px")} ${txt("remote.ntfy_server", r.ntfy_server, "", "text", "140px")}`),
         `<button class="btn sm" id="testRemote">${icon("play")}Send test</button>`) + `</div>`;
     if (this.tab === "integrations") html = `<div class="grid g-2">` +
+      card("router", "Router (TP-Link)", row("Enabled", m.router && m.router.error ? `<span class="bad-t">${esc(m.router.error)}</span>` : m.router && m.router.last_ok ? `<span class="good-t">Connected · last read ${fmtAgo(m.router.last_ok)}</span>` : "Read status, ports, Wi-Fi and connected devices straight from your router", sw("router_enabled", s.router_enabled)) +
+        row("Router address", "Leave blank to use your default gateway", txt("router_host", s.router_host, "e.g. 192.168.0.1")) +
+        row("Username / password", "The router's admin login — the password is stored encrypted. Some ISP routers want 'user' rather than 'admin'.", `${txt("router_user", s.router_user, "admin", "text", "110px")} ${txt("router_password", s.router_password, "", "password", "170px")}`) +
+        row("Check every", "Seconds (minimum 60). The router allows one admin at a time, so NetWatch signs in, reads and signs out.", num("router_interval", s.router_interval, 100, 'min="60"')) +
+        `<div class="small muted">Read-only: NetWatch never changes router settings. After 3 failed sign-ins it stops trying, so it can't lock your account.</div>`,
+        `<button class="btn sm" id="routerTest">${icon("play")}Test</button>`) +
       card("sparkle", "Ask NetWatch (AI assistant)", row("Anthropic API key", "From console.anthropic.com — stored encrypted", txt("ai_key", s.ai_key, "sk-ant-…", "password")) + row("Model", "Claude model to use", txt("ai_model", s.ai_model))) +
       card("network", "Home Assistant (MQTT)", row("Enabled", m.mqtt.connected ? `<span class="good-t">Connected</span>` : m.mqtt.error ? `<span class="bad-t">${esc(m.mqtt.error)}</span>` : "Publishes sensors with auto-discovery", sw("mqtt_enabled", s.mqtt_enabled)) +
         row("Broker", "Host and port", `${txt("mqtt_host", s.mqtt_host, "homeassistant.local", "text", "180px")} ${num("mqtt_port", s.mqtt_port, 90)}`) + row("Username / password", "", `${txt("mqtt_user", s.mqtt_user, "", "text", "140px")} ${txt("mqtt_password", s.mqtt_password, "", "password", "140px")}`) +
@@ -449,6 +455,7 @@ PAGES.settings = {
     const on = (id, fn) => { if ($("#" + id)) $("#" + id).onclick = fn; };
     on("ovl", async () => { const r = await API.toggle_overlay(); if (r.error) toast(r.error, "bad"); });
     on("openData", () => API.open_data_folder());
+    on("routerTest", async () => { await this.save(true); toast("Signing in to your router…"); const r = await API.router_retry(); toast(r.error ? r.error : "Connected — see the Router page", r.error ? "bad" : "good"); this.s = await API.get_settings(); this.render(); });
     on("weeklyNow", async () => { await this.save(true); const r = await API.send_weekly_now(); const k = Object.keys(r.results || {}); toast(k.length ? "Weekly summary sent" : "Enable a remote channel first", k.length ? "good" : "bad"); });
     on("testRemote", async () => { this.collectInto(); toast("Sending test alert…"); const res = (await API.test_remote(this.payload())).results || {}; const k = Object.keys(res); toast(k.length ? k.map(x => `${x}: ${res[x]}`).join(" · ") : "Enable at least one channel first", k.some(x => res[x] !== "sent") || !k.length ? "bad" : "good"); });
     on("updCheck", async () => { await this.save(true); const st = await API.check_update(); toast(st.error || (st.available ? `Version ${st.latest} available` : "You're up to date"), st.error ? "bad" : "good"); this.s = await API.get_settings(); this.render(); });

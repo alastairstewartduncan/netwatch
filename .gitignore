@@ -3,3 +3,4 @@ dist/
 __pycache__/
 *.pyc
 *.spec
+tools/router_probe.json

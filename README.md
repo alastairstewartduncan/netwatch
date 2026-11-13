@@ -19,6 +19,10 @@ A modern desktop app that watches your internet connection, home network and the
 | **Tray & startup** | Lives in the system tray (icon colour = connection health), keeps monitoring when closed, optional **start with Windows**. |
 | **Look & feel** | Dark and light themes, modern dashboard UI. |
 
+## New in 3.2 — Router integration
+
+NetWatch can now sign in to your TP-Link router (including ISP-supplied EX and VR models such as brsk's EX820v) and read its status directly. The new **Router** page shows the broadband link, public IP, uptime, firmware, CPU and memory, Wi-Fi bands and channels, a diagram of the Ethernet ports with the speed each one negotiated, and every connected device, with charts over time. **Router insights** gives a one-click AI health check and answers questions about your router. It is read-only and lockout-safe: it signs in, reads and signs out every 5 minutes, and stops after 3 failed sign-ins. Check your router works before releasing with `python tools/router_probe.py`.
+
 ## New in 3.1
 
 Windows installer and uninstaller, About page with version, release history, system info and licences, first-run setup, "What's new" after updates, loading screen, new app icon, and updates that run the installer.
@@ -47,6 +51,7 @@ Windows installer and uninstaller, About page with version, release history, sys
 | **Access** | Phone dashboard with PIN, mini always-on-top overlay, multi-site hub/agent mode, auto-update from GitHub releases. |
 
 ### Things that need you to switch them on (Settings)
+- **Router** – its admin password (Integrations → Router). Some ISP routers want the username `user` instead of `admin`.
 - **Ask NetWatch** – an Anthropic API key (Integrations).
 - **Home Assistant** – your MQTT broker (Integrations).
 - **Pi-hole / AdGuard** – its address and password (Integrations).
@@ -111,10 +116,12 @@ nw/extras.py       v3 feature manager (presence, anomalies, VPN, apps, usage, si
 nw/security.py     UPnP audit, exposure, spoofing/DHCP, PC check, firewall, capture
 nw/diag.py         troubleshooter, quality, bufferbloat, M365, cloud, IPv6, DNS cache
 nw/integrations.py MQTT/Home Assistant, Pi-hole/AdGuard, SNMP, Claude, updater
+nw/router.py       router integration (TP-Link admin API via tplinkrouterc6u)
 nw/version.py      version, publisher, changelog, credits (single source of truth)
 ui/                HTML/CSS/JS interface (Chart.js bundled for offline use)
 installer/         NSIS installer script
-tools/             build.py, make_version_info.py, make_art.py
+tools/             build.py, make_version_info.py, make_art.py, router_probe.py
+tests/             router integration tests (python -m unittest discover -s tests)
 assets/            app icon and installer artwork
 .github/workflows/ automatic release builds
 ```

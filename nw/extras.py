@@ -36,8 +36,10 @@ EXTRA_DEFAULTS = {
     "downtime_cost_per_hour": 0, "overlay_on_start": False,
     "isp_counts": {}, "gateway_mac": "", "usage_alerted": "", "weekly_last": "", "update_notified": "",
     "survey": [],
+    "router_enabled": False, "router_host": "", "router_user": "admin", "router_password": "",
+    "router_interval": 300,
 }
-SECRET_FIELDS = ("mqtt_password", "dnsfilter_password", "ai_key", "lan_pin")
+SECRET_FIELDS = ("mqtt_password", "dnsfilter_password", "ai_key", "lan_pin", "router_password")
 
 
 def _hm(s):
@@ -61,6 +63,8 @@ class Extras:
         self.ha = integrations.HomeAssistantBridge(lambda: engine.settings)
         self.dnsfilter = integrations.DnsFilter(lambda: engine.settings)
         self.updater = integrations.Updater(engine.data_dir, VERSION)
+        from .router import RouterLink
+        self.router = RouterLink(engine)
         self.jobs = {}
         self.vpn = []
         self.captive = None
@@ -100,6 +104,7 @@ class Extras:
             (lambda: 6 * 3600, self._update_tick, 300),
             (lambda: 900, self._usage_tick, 90),
             (lambda: 6 * 3600, self._cert_tick, 150),
+            (lambda: 30, self.router.tick, 20),
         ]
         for interval, fn, delay in jobs:
             threading.Thread(target=e._loop, args=(interval, fn, delay), daemon=True).start()
@@ -809,4 +814,19 @@ th,td{{border-bottom:1px solid #e2e8f0;padding:6px 8px;text-align:left}}th{{back
                 "services": [{k: v for k, v in s.items() if k != "hist"} for s in e.services_view()],
                 "usage": {k: v for k, v in self.usage().items() if k != "days"},
                 "settings": {"plan_down_mbps": e.settings.get("plan_down_mbps"),
-                             "plan_up_mbps": e.settings.get("plan_up_mbps")}}
+                             "plan_up_mbps": e.settings.get("plan_up_mbps")},
+                "router": self.router.ai_context() if e.settings.get("router_enabled") else None}
+
+    def router_context(self):
+        """What the assistant sees when asked about the router: router data plus the PC-side view."""
+        e = self.e
+        snap = e.snapshot()
+        cur = {k: snap.get(k) for k in ("status", "internet_up", "latency", "jitter", "loss", "router", "net",
+                                        "public", "wifi", "dns_ms", "uptime")}
+        h = e.store.history(24)
+        h.pop("series", None)
+        return {"now": datetime.now().isoformat(timespec="minutes"), "router": self.router.ai_context(),
+                "this_pc_now": cur, "wifi_from_this_pc": e.wifi_view(), "last_24_hours": h,
+                "router_events": [x for x in e.store.events(150) if x.get("category") == "router"][:25],
+                "plan": {"down_mbps": e.settings.get("plan_down_mbps"), "up_mbps": e.settings.get("plan_up_mbps")},
+                "last_speed_test": (snap.get("speed") or {}).get("result")}

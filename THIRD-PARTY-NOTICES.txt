@@ -7,6 +7,10 @@ NetWatch includes the following third-party software, each under its own licence
   Pillow                           MIT-CMU (HPND)                 https://python-pillow.org/
   openpyxl                         MIT                            https://openpyxl.readthedocs.io/
   Chart.js                         MIT                            https://www.chartjs.org/
+  tplinkrouterc6u                  GPL-3.0-or-later               https://github.com/AlexandrErohin/TP-Link-Archer-C6U
+  requests                         Apache-2.0                     https://requests.readthedocs.io/
+  PyCryptodome                     BSD-2-Clause / Public domain   https://www.pycryptodome.org/
+  macaddress                       0BSD                           https://github.com/mentalisttraceur/python-macaddress
   world-atlas / Natural Earth      ISC / Public domain            https://github.com/topojson/world-atlas
   Microsoft Edge WebView2          Microsoft Software License     https://developer.microsoft.com/microsoft-edge/webview2/
 
@@ -18,3 +22,8 @@ NetWatch can use these online services (some only when you turn them on):
   ip-api.com                       World map locations (opt-in)   https://ip-api.com/
   Anthropic Claude                 Ask NetWatch assistant (opt-in) https://www.anthropic.com/
   ntfy                             Phone push alerts (opt-in)     https://ntfy.sh/
+
+About the GPL component: NetWatch's own source code is MIT-licensed. The router integration uses
+tplinkrouterc6u, which is GPL-3.0-or-later, so the packaged NetWatch app (installer and portable zip) as a
+whole is distributed under the terms of GPL-3.0-or-later. The complete source code for every release is
+available at https://github.com/alastairstewartduncan/netwatch.

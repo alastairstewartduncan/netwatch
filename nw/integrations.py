@@ -465,7 +465,24 @@ ASSISTANT_SYSTEM = (
     "next steps (e.g. restart router, move closer to Wi-Fi, contact ISP with the report). Never invent data.")
 
 
-def ask_claude(api_key, model, question, context, history=None):
+ROUTER_SYSTEM = ASSISTANT_SYSTEM + (
+    " This conversation is about the user's home router. The JSON includes what NetWatch read directly from "
+    "the router's admin interface (model, firmware, WAN/broadband link, uptime, CPU and memory, Wi-Fi bands, "
+    "Ethernet port link speeds and the connected-client list) alongside what this PC measures. Interpret it like "
+    "an experienced network engineer explaining to a home user: an Ethernet port linked at 100 Mbps on a gigabit "
+    "port usually means a damaged or 4-wire cable; a guest network left on with no guests may be unnecessary; "
+    "many clients on 2.4 GHz that could use 5 GHz hurts performance; sustained high CPU or memory, frequent "
+    "reboots or WAN reconnects point at the router or line; clients the router lists but NetWatch's scan hasn't "
+    "seen may be sleeping, on the guest network or isolated. ISP-supplied routers may limit which settings the "
+    "user can change - say so where relevant. Use markdown headings (###) and short bullet lists.")
+
+ROUTER_HEALTH_PROMPT = (
+    "Give me a health check of my router. Start with a one-line verdict. Then: what's working well; any problems "
+    "or risks, most important first, each with the evidence from the data; and a short numbered list of practical "
+    "things I should do. Mention anything unusual about connected devices.")
+
+
+def ask_claude(api_key, model, question, context, history=None, system=None):
     if not api_key:
         raise RuntimeError("Add your Anthropic API key in Settings → Integrations to use the assistant.")
     messages = []
@@ -474,7 +491,7 @@ def ask_claude(api_key, model, question, context, history=None):
             messages.append({"role": h["role"], "content": h["content"]})
     messages.append({"role": "user", "content": f"Monitoring data (JSON):\n{json.dumps(context, default=str)[:60000]}"
                                                  f"\n\nQuestion: {question}"})
-    body = {"model": model or "claude-sonnet-5-5", "max_tokens": 1200, "system": ASSISTANT_SYSTEM,
+    body = {"model": model or "claude-sonnet-5-5", "max_tokens": 1600, "system": system or ASSISTANT_SYSTEM,
             "messages": messages}
     try:
         res = _http_json("https://api.anthropic.com/v1/messages", body, timeout=90,

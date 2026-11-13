@@ -482,3 +482,20 @@ table.t tr:last-child td { border-bottom: 0; }
 .wn li { display: flex; gap: 10px; align-items: flex-start; color: var(--text-2); line-height: 1.45; }
 .wn li svg { color: var(--good); flex: none; margin-top: 2px; }
 @media (max-width: 860px) { .about-hero { flex-direction: column; align-items: flex-start; } .ob-feats { grid-template-columns: 1fr; } .modal.wide { width: calc(100vw - 24px); } }
+
+/* ---------------------------------------------------------- Router page (3.2) */
+.rt-ports { width: 100%; max-height: 200px; display: block; margin: 0 auto; }
+.rt-port-name { font-size: 12px; font-weight: 600; fill: var(--text-2); }
+.rt-port-speed { font-size: 12px; font-weight: 600; }
+.rt-port-max { font-size: 10px; fill: var(--muted); }
+.rt-bands { display: grid; gap: 12px; }
+.rt-band { padding: 12px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+.rt-chat { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; max-height: 520px; overflow-y: auto; padding-right: 4px; }
+.rt-chat .bubble { max-width: 92%; }
+.ai-md p { margin: 0 0 8px; } .ai-md p:last-child { margin-bottom: 0; }
+.ai-md ul, .ai-md ol { margin: 4px 0 10px; padding-left: 20px; } .ai-md li { margin: 3px 0; }
+.ai-md .ai-h { font-weight: 700; margin: 12px 0 6px; color: var(--text); } .ai-md .ai-h:first-child { margin-top: 0; }
+.ai-md code { font-size: 12px; padding: 1px 5px; border-radius: 5px; background: var(--surface-solid); }
+.rt-raw pre { max-height: 360px; overflow: auto; margin: 12px 0 0; padding: 12px; border-radius: 10px; background: var(--surface-2); user-select: text; white-space: pre-wrap; word-break: break-all; }
+.rt-setup h3 { font-size: 17px; }
+@media (max-width: 900px) { #rtKpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

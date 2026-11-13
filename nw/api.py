@@ -240,7 +240,8 @@ class Api:
         s["_meta"] = {"windows": winapi.IS_WINDOWS, "admin": winapi.is_admin(), "data_dir": str(e.data_dir),
                       "version": VERSION, "frozen": bool(getattr(sys, "frozen", False)),
                       "lan": dict(self._x.lan_state), "mqtt": dict(self._x.ha.state), "update": dict(self._x.updater.state),
-                      "site_push": dict(self._x.site), "hostname": __import__("socket").gethostname()}
+                      "site_push": dict(self._x.site),
+                      "router": {k: v for k, v in self._x.router.state.items()}, "hostname": __import__("socket").gethostname()}
         return s
 
     @safe
@@ -258,7 +259,7 @@ class Api:
                     s.pop(k)
                 elif s[k]:
                     s[k] = winapi.protect(str(s[k]))
-        for k in ("mqtt_port", "data_cap_gb", "billing_day", "lan_port", "downtime_cost_per_hour"):
+        for k in ("mqtt_port", "data_cap_gb", "billing_day", "lan_port", "downtime_cost_per_hour", "router_interval"):
             if k in s:
                 s[k] = float(s[k] or 0)
         lan_before = (self._engine.settings.get("lan_enabled"), self._engine.settings.get("lan_port"))
@@ -515,6 +516,34 @@ class ApiV3Mixin:
         e = self._engine
         answer = integrations.ask_claude(winapi.unprotect(e.settings.get("ai_key", "")), e.settings.get("ai_model"),
                                          question, self._x.assistant_context(), history or [])
+        return {"answer": answer}
+
+    # ------------------------------------------------------------ router
+    @safe
+    def get_router(self):
+        return self._x.router.view()
+
+    @safe
+    def router_poll_now(self):
+        snap = self._x.router.poll(manual=True)
+        return {"ok": True, "snap": bool(snap)}
+
+    @safe
+    def router_retry(self):
+        self._x.router.retry()
+        return self.router_poll_now()
+
+    @safe
+    def router_pause(self, minutes):
+        self._x.router.pause(minutes)
+        return {"ok": True, "paused_until": self._x.router.state["paused_until"]}
+
+    @safe
+    def ask_router(self, question=None, history=None):
+        e = self._engine
+        q = (question or "").strip() or integrations.ROUTER_HEALTH_PROMPT
+        answer = integrations.ask_claude(winapi.unprotect(e.settings.get("ai_key", "")), e.settings.get("ai_model"),
+                                         q, self._x.router_context(), history or [], system=integrations.ROUTER_SYSTEM)
         return {"answer": answer}
 
     @safe

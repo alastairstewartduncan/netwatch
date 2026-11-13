@@ -74,7 +74,7 @@ def main():
     shutil.rmtree(DIST / "NetWatch", ignore_errors=True)
     run([sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "--onedir", "--noconsole",
          "--name", "NetWatch", "--icon", "assets/netwatch.ico", "--version-file", "build/version_info.txt",
-         "--add-data", f"ui{os.pathsep}ui", "--collect-all", "webview",
+         "--add-data", f"ui{os.pathsep}ui", "--collect-all", "webview", "--collect-all", "tplinkrouterc6u",
          "--hidden-import", "pystray._win32", "--hidden-import", "clr", "netwatch.py"])
     exe = DIST / "NetWatch" / "NetWatch.exe"
     if not exe.exists():
