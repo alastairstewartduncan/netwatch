@@ -25,6 +25,7 @@ CHANGELOG = [
         "Ask NetWatch now includes router data; device list gains the router's names and wired/2.4/5 GHz connection type",
         "Alerts for router restarts, broadband IP changes and the router reporting its broadband link down",
         "Read-only and lockout-safe: signs in, reads and signs out every 5 minutes, and stops after 3 failed sign-ins",
+        "Fixed the keyboard sometimes not working in the NetWatch window after it was opened from the tray or switched back to",
     ]},
     {"version": "3.1.0", "date": "2026-11-10", "title": "The finished product", "changes": [
         "Proper Windows installer with Start menu and desktop shortcuts, and uninstall from Settings → Apps",

@@ -253,11 +253,7 @@ def main():
         if w:
             w.show()
             w.restore()
-            try:
-                w.on_top = True
-                w.on_top = False  # nudge to the foreground
-            except Exception:
-                pass
+            focus_webview(w)
             if page:
                 try:
                     w.evaluate_js(f"go({json.dumps(page)})")
@@ -265,6 +261,41 @@ def main():
                     pass
         else:
             webbrowser.open(state.get("url", "") + (f"#{page}" if page else ""))
+
+    def focus_webview(w):
+        """Moves Windows keyboard focus into the embedded WebView2 control.
+
+        Without this the window can be active, and clicks work, while keystrokes never reach the page - a known
+        WebView2-in-WinForms focus problem after the window is shown from the tray, restored or re-activated."""
+        try:
+            form = getattr(w, "native", None)
+            wv = getattr(getattr(form, "browser", None), "webview", None)
+            if form is None or wv is None:
+                return
+            from System import Action  # pythonnet, bundled with pywebview on Windows
+
+            def _do():
+                try:
+                    form.ActiveControl = wv
+                    wv.Focus()
+                except Exception:
+                    pass
+            form.BeginInvoke(Action(_do))
+        except Exception:
+            pass
+
+    def hook_focus(w):
+        """Re-focuses the page every time the window is activated (Alt+Tab, taskbar, tray, click)."""
+        try:
+            form = getattr(w, "native", None)
+            if form is None:
+                return
+            if not state.get("focus_hooked"):
+                state["focus_hooked"] = True
+                form.Activated += lambda *_: focus_webview(w)
+            focus_webview(w)
+        except Exception:
+            engine.log_error("focus hook")
 
     def quit_app():
         if state["quitting"]:
@@ -345,6 +376,8 @@ def main():
                 toggle_overlay()
 
         window.events.closing += on_closing
+        window.events.shown += lambda: hook_focus(window)
+        window.events.loaded += lambda: hook_focus(window)
         webview.start(on_started, private_mode=False, storage_path=str(data_dir() / "webview"))
         if not state["quitting"]:
             quit_app()
