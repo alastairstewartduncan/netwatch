@@ -5,8 +5,8 @@ the installer and Add/Remove Programs - picks it up at build time.
 """
 
 APP_NAME = "NetWatch"
-VERSION = "3.2.0"
-BUILD_DATE = "2026-11-13"
+VERSION = "3.2.1"
+BUILD_DATE = "2026-11-19"
 CHANNEL = "Stable"
 PUBLISHER = "Alastair Duncan"
 COPYRIGHT = "© 2026 Alastair Duncan"
@@ -16,6 +16,15 @@ UPDATE_REPO_DEFAULT = "alastairstewartduncan/netwatch"  # e.g. "your-github-name
 
 # Newest first. Each change is a short, user-facing sentence.
 CHANGELOG = [
+    {"version": "3.2.1", "date": "2026-11-19", "title": "Memory fix", "changes": [
+        "Fixed the app window's memory growing to several gigabytes when NetWatch runs for days",
+        "Closing the window to the tray now unloads the interface; it reloads when you open it again",
+        "When started with Windows, the interface isn't loaded until you open the window",
+        "The interface stops refreshing while minimised, and refreshes itself if it has been open for hours",
+        "The mini overlay fetches only the four figures it shows",
+        "Fixed typing not reaching the window after opening it from the tray",
+        "Router page shows its data after a successful read even when automatic checks are off",
+    ]},
     {"version": "3.2.0", "date": "2026-11-13", "title": "Router integration", "changes": [
         "New Router page: NetWatch signs in to your TP-Link router (including ISP-supplied EX and VR models) and reads its status directly",
         "See broadband link, public IP, uptime, firmware, CPU and memory, Wi-Fi bands and channels, and every connected device",

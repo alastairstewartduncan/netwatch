@@ -251,6 +251,14 @@ def main():
     def show(page=""):
         w = state["window"]
         if w:
+            if state.get("asleep"):
+                # The UI was unloaded while hidden: load it fresh, straight onto the page asked for.
+                state["asleep"] = False
+                try:
+                    w.load_url(state["start_url"] + (f"#{page}" if page else ""))
+                except Exception:
+                    pass
+                page = ""
             w.show()
             w.restore()
             focus_webview(w)
@@ -314,6 +322,23 @@ def main():
         if state.get("server"):
             threading.Thread(target=state["server"].shutdown, daemon=True).start()
 
+    def hide_main():
+        # Hide to the tray and swap the UI for a blank page. A WebView2 page left polling for days
+        # grows to gigabytes; unloading it releases that memory. show() loads the UI again.
+        w = state["window"]
+        if not w:
+            return
+        w.hide()
+        if not state.get("asleep"):
+            state["asleep"] = True
+
+            def unload():
+                try:
+                    w.load_url(state["sleep_url"])
+                except Exception:
+                    state["asleep"] = False
+            threading.Thread(target=unload, daemon=True).start()
+
     def toggle_overlay():
         if not have_webview:
             return False
@@ -351,17 +376,23 @@ def main():
 
     if have_webview:
         import webview
-        start_url = (resource_dir() / "index.html").as_uri() + (f"#{args.page}" if args.page else "")
+        state["start_url"] = (resource_dir() / "index.html").as_uri()
+        state["sleep_url"] = (resource_dir() / "sleep.html").as_uri()
+        # Started minimised (Start with Windows): don't run the full UI until the window is opened.
+        state["asleep"] = bool(args.minimized)
+        start_url = state["sleep_url"] if args.minimized else \
+            state["start_url"] + (f"#{args.page}" if args.page else "")
         window = webview.create_window(
             APP_NAME, url=start_url, js_api=api,
             width=1440, height=920, min_size=(1100, 720), hidden=args.minimized,
             background_color="#070b18", text_select=False)
         state["window"] = window
         api._set_window(window)
+        api._hide_cb = hide_main
 
         def on_closing():
             if not state["quitting"] and engine.settings.get("minimize_to_tray", True) and tray.available:
-                window.hide()
+                hide_main()
                 if not state.get("hint_shown"):
                     state["hint_shown"] = True
                     tray.notify("Still running", "NetWatch is still monitoring in the background. "
@@ -375,9 +406,20 @@ def main():
             if engine.settings.get("overlay_on_start"):
                 toggle_overlay()
 
+        # Minimised to the taskbar: stop the UI polling until it's restored (the page stays loaded).
+        def set_sleep(on):
+            if state.get("asleep"):
+                return
+            try:
+                window.evaluate_js(f"window.NW_SLEEP && window.NW_SLEEP({'true' if on else 'false'})")
+            except Exception:
+                pass
+
         window.events.closing += on_closing
         window.events.shown += lambda: hook_focus(window)
         window.events.loaded += lambda: hook_focus(window)
+        window.events.minimized += lambda: threading.Thread(target=set_sleep, args=(True,), daemon=True).start()
+        window.events.restored += lambda: threading.Thread(target=set_sleep, args=(False,), daemon=True).start()
         webview.start(on_started, private_mode=False, storage_path=str(data_dir() / "webview"))
         if not state["quitting"]:
             quit_app()

@@ -274,13 +274,19 @@ function go(id) {
   pageObj.init && pageObj.init();
   if (pageObj.refresh) {
     pageObj.refresh();
-    if (pageObj.interval) pageTimer = setInterval(() => pageObj.refresh(), pageObj.interval);
+    if (pageObj.interval) pageTimer = setInterval(() => { if (!uiAsleep()) pageObj.refresh(); }, pageObj.interval);
   }
   if (STATE && pageObj.onState) pageObj.onState(STATE);
 }
 const head = (title, sub, actions = "") => `<div class="page-head"><div><h1 class="page-title">${title}</h1><div class="page-sub">${sub}</div></div><div class="actions">${actions}</div></div>`;
 
+// The window is often minimised or hidden in the tray for days. Every bridge call costs WebView2
+// memory, so don't poll while nobody can see the page.
+function uiAsleep() { return document.hidden || !!window.NW_ASLEEP; }
+window.NW_SLEEP = on => { window.NW_ASLEEP = !!on; };
+
 async function pollState() {
+  if (uiAsleep()) { setTimeout(pollState, 3000); return; }
   try {
     const s = await API.get_state();
     if (s && !s.error) {
@@ -293,6 +299,25 @@ async function pollState() {
   } catch (e) { console.error(e); }
   setTimeout(pollState, 1000);
 }
+// Memory watchdog (app window only). A long-running page slowly accumulates WebView2 memory, so
+// reload it when the JS heap gets large or the page has been open for hours, but only once the user
+// has been idle for a few minutes and isn't in the middle of something.
+const UI_LOADED = Date.now();
+let lastInput = Date.now();
+["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach(ev =>
+  window.addEventListener(ev, () => { lastInput = Date.now(); }, { passive: true, capture: true }));
+setInterval(() => {
+  if (window.NW_BROWSER) return;
+  const heap = (performance.memory && performance.memory.usedJSHeapSize) || 0;
+  const tooBig = heap > 350e6, tooOld = Date.now() - UI_LOADED > 4 * 3600e3;
+  if (!tooBig && !tooOld) return;
+  const idle = uiAsleep() || Date.now() - lastInput > 3 * 60e3;
+  const ae = document.activeElement;
+  const typing = ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && ae.value;
+  const overlayOpen = $("#modal.on") || $("#drawer.on");
+  if (idle && !typing && !overlayOpen) location.reload();
+}, 60e3);
+
 function renderSidebarStatus(s) {
   const st = s.status;
   const paused = s.alerts_paused ? `<div class="row small muted" style="margin-top:6px">${icon("pause", "")}Alerts paused until ${fmtClock(s.paused_until)}</div>` : "";

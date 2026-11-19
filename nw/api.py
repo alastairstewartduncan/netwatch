@@ -35,6 +35,7 @@ class Api:
         self._x = engine.extras
         self._window = None
         self._quit_cb = quit_cb
+        self._hide_cb = None
 
     def _set_window(self, window):
         self._window = window
@@ -43,6 +44,13 @@ class Api:
     @safe
     def get_state(self):
         return self._engine.snapshot()
+
+    @safe
+    def get_mini_state(self):
+        # Just what the mini overlay shows, so it doesn't pull the full snapshot every 2 seconds.
+        s = self._engine.snapshot()
+        return {"status": {"level": s["status"].get("level")}, "latency": s["latency"],
+                "down": s["down"], "up": s["up"]}
 
     # ------------------------------------------------------------ devices
     @safe
@@ -302,7 +310,9 @@ class Api:
 
     @safe
     def hide_window(self):
-        if self._window:
+        if self._hide_cb:
+            self._hide_cb()
+        elif self._window:
             self._window.hide()
         return {"ok": True}
 

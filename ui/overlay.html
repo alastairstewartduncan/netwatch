@@ -41,7 +41,7 @@
   }
   async function tick() {
     try {
-      const s = await window.pywebview.api.get_state();
+      const s = await window.pywebview.api.get_mini_state();
       document.getElementById("dot").className = "dot " + (s.status.level || "");
       document.getElementById("ping").innerHTML = s.latency == null ? "—" : `${Math.round(s.latency)}<small>ms</small>`;
       const d = rate(s.down), u = rate(s.up);
